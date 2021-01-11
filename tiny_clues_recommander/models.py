@@ -102,7 +102,7 @@ class SVD(BaseRecommander):
             ratings (pd.DataFrame): DataFrame contains ratings cols: user_id | movie_id | rating
             k (int, optional): number of component to reconstruct the matrix. Defaults to 20.
         """ 
-
+        self.train = ratings
         self.df_ratings = ratings.pivot(
             index='user_id',
             columns='movie_id',
@@ -141,6 +141,30 @@ class SVD(BaseRecommander):
             np.Array: of movie ids
         """      
         return np.array(self.predict_ratings(user_id, N).index)
+    def test_result(self, test):
+        """create test result to be used for evaluation
+
+        Args:
+            test (pd.DataFrame): DataFrame contains ratings cols: user_id | movie_id | rating
+
+        Returns:
+            List: list of tuple (true, pred)
+        """        
+
+        test_users = set(test.user_id.unique())
+        train_users = set(self.train.user_id.unique())
+        test_users = train_users.intersection(test_users)
+
+        test_result = []
+        for _, row in test[test.user_id.isin(test_users)].iterrows():
+            user_id, movie_id, true_rating = row
+            try:
+                pred_rating = self.predicted_R_df.loc[user_id, movie_id]
+            except:
+                pass
+            test_result.append((true_rating, pred_rating))
+        return test_result
+
 
 class CollaborativeFilter(BaseRecommander):
     
